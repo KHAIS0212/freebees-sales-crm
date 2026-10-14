@@ -4,6 +4,14 @@ A mobile-friendly Sales Customer Relationship Management (CRM) application devel
 
 The application helps a sales team record customer interactions, track activity status, view dashboard statistics, and manage follow-ups through a responsive interface.
 
+
+## 🌐 Live Demo
+
+**Live Application:** https://freebees-sales-crm-i1ip.vercel.app/
+
+Explore the deployed FreeBees Sales CRM, built with Next.js, Supabase, and Tailwind CSS.
+
+
 ## Features
 
 - **Dashboard:** View total, pending, completed, and follow-up-required activity counts using database records.
