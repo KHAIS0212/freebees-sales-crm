@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --background: #F3F4F6;
+  --foreground: #18181B;
+  --surface: #FFFFFF;
+  --border: #E5E7EB;
+  --muted: #71717A;
+  --hover: #F9FAFB;
+  --brand: #9F1239;
+  --brand-strong: #881337;
+  --brand-soft: #FFF1F2;
 }
 
 @theme inline {
@@ -12,15 +20,66 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+* { box-sizing: border-box; }
+html { min-height: 100%; background: var(--background); }
 body {
+  min-height: 100%;
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.crm-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 4px 18px rgb(24 24 27 / 4%);
+}
+.crm-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+.crm-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #FFFFFF;
+  padding: 11px 12px;
+  color: var(--foreground);
+  font-size: .875rem;
+  line-height: 1.5;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+.crm-input-search { padding-left: 40px; }
+.crm-input::placeholder { color: #A1A1AA; opacity: 1; }
+.crm-input:focus {
+  border-color: var(--brand);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(159 18 57 / 12%);
+}
+.crm-input:disabled { opacity: .6; cursor: not-allowed; }
+select.crm-input { min-height: 44px; }
+textarea.crm-input { min-height: 96px; }
+::selection { background: rgb(159 18 57 / 16%); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }
