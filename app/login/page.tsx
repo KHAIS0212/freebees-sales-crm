@@ -1,12 +1,22 @@
+
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+function LoginForm() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const accessDenied = searchParams.get("access") === "denied";
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const [error, setError] = useState(() =>
+        accessDenied
+            ? "Your account does not have active team access. Please contact your administrator."
+            : "",
+    );
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -27,12 +37,42 @@ export default function LoginPage() {
                 });
 
             if (loginError) {
-                setError("Unable to sign in. Check your credentials and try again.");
+                setError(
+                    "Unable to sign in. Check your credentials and try again.",
+                );
+                return;
+            }
+
+            const sessionResponse = await fetch("/api/auth/session", {
+                method: "GET",
+                cache: "no-store",
+            });
+
+            if (
+                sessionResponse.status === 401 ||
+                sessionResponse.status === 403
+            ) {
+                await supabase.auth.signOut();
+
+                setError(
+                    sessionResponse.status === 403
+                        ? "Your account does not have active team access. Please contact your administrator."
+                        : "Your session could not be verified. Please sign in again.",
+                );
+
+                return;
+            }
+
+            if (!sessionResponse.ok) {
+                setError(
+                    "Unable to verify your team access. Please try again.",
+                );
                 return;
             }
 
             setMessage("Sign-in successful. Redirecting...");
-            window.location.assign("/");
+            router.replace("/");
+            router.refresh();
         } catch {
             setError("Something went wrong. Please try again.");
         } finally {
@@ -101,13 +141,19 @@ export default function LoginPage() {
                     </div>
 
                     {error && (
-                        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                        <p
+                            role="alert"
+                            className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+                        >
                             {error}
                         </p>
                     )}
 
                     {message && (
-                        <p role="status" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-[#881337]">
+                        <p
+                            role="status"
+                            className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-[#881337]"
+                        >
                             {message}
                         </p>
                     )}
@@ -127,5 +173,21 @@ export default function LoginPage() {
                 </p>
             </section>
         </main>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense
+            fallback={
+                <main className="flex min-h-screen items-center justify-center bg-gray-100">
+                    <p className="text-sm text-slate-500">
+                        Loading sign-in page...
+                    </p>
+                </main>
+            }
+        >
+            <LoginForm />
+        </Suspense>
     );
 }

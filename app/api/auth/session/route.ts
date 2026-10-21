@@ -1,77 +1,48 @@
 
+import { connection } from "next/server";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getActiveTeamClient } from "@/lib/activities/auth";
 
-
-export async function GET(request: Request) {
-request.headers.get("cookie");
+export async function GET() {
+  await connection();
 
   try {
-    // Ensure this endpoint uses the incoming request's session.
+    const access = await getActiveTeamClient();
 
-    const supabase = await createClient();
+    if (!access.ok) {
+      if (access.response.status === 401) {
+        return NextResponse.json(
+          {
+            authenticated: false,
+            error: "Authentication required.",
+          },
+          {
+            status: 401,
+            headers: { "Cache-Control": "no-store" },
+          },
+        );
+      }
 
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims();
+      if (access.response.status === 403) {
+        return NextResponse.json(
+          {
+            authenticated: true,
+            error: "Active team membership required.",
+          },
+          {
+            status: 403,
+            headers: { "Cache-Control": "no-store" },
+          },
+        );
+      }
 
-    const userId = claimsData?.claims?.sub;
-
-    if (
-      claimsError ||
-      typeof userId !== "string" ||
-      userId.length === 0
-    ) {
-      return NextResponse.json(
-        {
-          authenticated: false,
-          error: "Authentication required.",
-        },
-        {
-          status: 401,
-          headers: { "Cache-Control": "no-store" },
-        },
-      );
-    }
-
-    // Retrieve only the current user's team membership.
-    const { data: member, error: memberError } = await supabase
-      .from("team_members")
-      .select("role, is_active")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (memberError) {
-      console.error(
-        "Session membership verification failed:",
-        memberError.message,
-      );
-
-      return NextResponse.json(
-        { error: "Unable to verify team membership." },
-        {
-          status: 500,
-          headers: { "Cache-Control": "no-store" },
-        },
-      );
-    }
-
-    if (!member || !member.is_active) {
-      return NextResponse.json(
-        {
-          authenticated: true,
-          error: "Active team membership required.",
-        },
-        {
-          status: 403,
-          headers: { "Cache-Control": "no-store" },
-        },
-      );
+      return access.response;
     }
 
     return NextResponse.json(
       {
         authenticated: true,
-        role: member.role,
+        role: access.member.role,
       },
       {
         status: 200,
